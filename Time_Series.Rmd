@@ -1,0 +1,186 @@
+---
+title: "Time Series"
+author: "Daniela Dias, Diogo Marto"
+date: "2025-05-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Libraries
+
+```{r libraries}
+library(tidyverse)
+library(lubridate)
+library(forecast)
+library(tseries)
+library(ggplot2)
+```
+
+## Load and Prepare Data
+
+```{r load-data}
+# Load the dataset
+data <- read.csv("data.csv")
+
+# Convert month to Date format
+data$month <- as.Date(paste0("01-", data$month), format = "%d-%b")
+data <- data[order(data$month), ]
+
+# Create time series
+ts_python <- ts(data$python, start = c(2009, 1), frequency = 12)
+ts_r <- ts(data$r, start = c(2009, 1), frequency = 12)
+ts_matlab <- ts(data$matlab, start = c(2009, 1), frequency = 12)
+ts_nltk <- ts(data$nltk, start = c(2009, 1), frequency = 12)
+```
+
+## Time Series Plots
+
+```{r plots}
+autoplot(ts_python) + ggtitle("Python Mentions Over Time")
+autoplot(ts_r) + ggtitle("R Mentions Over Time")
+autoplot(ts_matlab) + ggtitle("Matlab Mentions Over Time")
+autoplot(ts_nltk) + ggtitle("NLTK Mentions Over Time")
+```
+
+## Seasonal Decomposition
+
+```{r decomposition}
+autoplot(decompose(ts_python))
+autoplot(decompose(ts_r))
+autoplot(decompose(ts_matlab))
+autoplot(decompose(ts_nltk))
+```
+
+## Stationarity Tests (ADF)
+
+```{r adf-test}
+adf_python <- adf.test(ts_python)
+adf_r <- adf.test(ts_r)
+adf_matlab <- adf.test(ts_matlab)
+adf_nltk <- adf.test(ts_nltk)
+
+# Create a data frame to summarize ADF test results
+adf_results <- data.frame(
+  Series = c("Python", "R", "Matlab", "NLTK"),
+  P_Value = c(adf_python$p.value, adf_r$p.value, adf_matlab$p.value, adf_nltk$p.value)
+)
+
+# Print ADF test results
+print(adf_results)
+```
+
+## Differencing
+
+```{r differencing}
+ts_python_diff <- diff(ts_python)
+ts_r_diff <- diff(ts_r)
+ts_matlab_diff <- diff(ts_matlab)
+ts_nltk_diff <- diff(ts_nltk)
+
+# Plot differenced series
+autoplot(ts_python_diff) + ggtitle("Differenced Python Series")
+autoplot(ts_r_diff) + ggtitle("Differenced R Series")
+autoplot(ts_matlab_diff) + ggtitle("Differenced Matlab Series")
+autoplot(ts_nltk_diff) + ggtitle("Differenced NLTK Series")
+```
+
+## ADF Test After Differencing
+
+```{r adf-after-diff}
+adf_python_diff <- adf.test(ts_python_diff)
+adf_r_diff <- adf.test(ts_r_diff)
+adf_matlab_diff <- adf.test(ts_matlab_diff)
+adf_nltk_diff <- adf.test(ts_nltk_diff)
+
+# Create a data frame to summarize ADF test results after differencing
+adf_diff_results <- data.frame(
+  Series = c("Python", "R", "Matlab", "NLTK"),
+  P_Value = c(adf_python_diff$p.value, adf_r_diff$p.value, adf_matlab_diff$p.value, adf_nltk_diff$p.value)
+)
+
+# Print ADF test results after differencing
+print(adf_diff_results)
+```
+
+## SARIMA Modeling – Box & Jenkins Methodology
+
+### Model Identification (Differencing, ACF, and PACF)
+
+```{r acf-pacf}
+par(mfrow = c(2, 2))
+acf(ts_python, main = "ACF - Python")
+pacf(ts_python, main = "PACF - Python")
+
+acf(ts_r, main = "ACF - R")
+pacf(ts_r, main = "PACF - R")
+
+acf(ts_matlab, main = "ACF - Matlab")
+pacf(ts_matlab, main = "PACF - Matlab")
+
+acf(ts_nltk, main = "ACF - NLTK")
+pacf(ts_nltk, main = "PACF - NLTK")
+par(mfrow = c(1, 1))
+```
+
+```{r acf-pacf-diff}
+par(mfrow = c(2, 2))
+acf(ts_python_diff, main = "ACF - Python (differenced)")
+pacf(ts_python_diff, main = "PACF - Python (differenced)")
+
+acf(ts_r_diff, main = "ACF - R (differenced)")
+pacf(ts_r_diff, main = "PACF - R (differenced)")
+
+acf(ts_matlab_diff, main = "ACF - Matlab (differenced)")
+pacf(ts_matlab_diff, main = "PACF - Matlab (differenced)")
+
+acf(ts_nltk_diff, main = "ACF - NLTK (differenced)")
+pacf(ts_nltk_diff, main = "PACF - NLTK (differenced)")
+par(mfrow = c(1, 1))
+```
+
+### Model Estimation using `auto.arima()`
+
+```{r sarima-fit-python}
+fit_python <- auto.arima(ts_python, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+fit_python
+```
+
+```{r sarima-fit-r}
+fit_r <- auto.arima(ts_r, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+fit_r
+```
+
+```{r sarima-fit-matlab}
+fit_matlab <- auto.arima(ts_matlab, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+fit_matlab
+```
+
+```{r sarima-fit-nltk}
+fit_nltk <- auto.arima(ts_nltk, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+fit_nltk
+```
+
+### Model Diagnostics
+
+```{r diagnostics-python}
+checkresiduals(fit_python)
+Box.test(residuals(fit_python), lag = 20, type = "Ljung-Box", fitdf = length(coef(fit_python)))
+```
+
+```{r diagnostics-r}
+checkresiduals(fit_r)
+Box.test(residuals(fit_r), lag = 20, type = "Ljung-Box", fitdf = length(coef(fit_r)))
+```
+
+```{r diagnostics-matlab}
+checkresiduals(fit_matlab)
+Box.test(residuals(fit_matlab), lag = 20, type = "Ljung-Box", fitdf = length(coef(fit_matlab)))
+```
+
+```{r diagnostics-nltk}
+checkresiduals(fit_nltk)
+Box.test(residuals(fit_nltk), lag = 20, type = "Ljung-Box", fitdf = length(coef(fit_nltk)))
+```
