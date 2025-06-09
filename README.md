@@ -21,3 +21,5 @@ To model and forecast the popularity of selected programming technologies using:
 
 The analysis includes model identification, parameter estimation, diagnostic checking, and forecasting.
 
+## [Report](https://typst.app/project/rQmZ2s28TiOO4mIYLY98z9)
+
