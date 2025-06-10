@@ -79,3 +79,5 @@ library(rugarch)       # GARCH modeling (optional)
 install.packages(c("tidyverse", "forecast", "tseries", "ggplot2", 
                    "lubridate", "gridExtra", "reshape2", "rugarch"))
 ```
+
+## [Report](https://typst.app/project/rQmZ2s28TiOO4mIYLY98z9)
