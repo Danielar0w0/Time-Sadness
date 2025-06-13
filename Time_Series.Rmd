@@ -19,79 +19,39 @@ Stack Overflow, as the world's largest programming community platform, serves as
 
 This study aims to analyze the temporal dynamics of technology usage patterns using time series analysis, with a specific focus on trends in the Python programming language. The primary objectives are:
 
-1. **Trend Analysis**: Identify and quantify long-term growth or decline patterns in Python usage
-2. **Seasonality Detection**: Discover recurring patterns that may reflect academic cycles, release schedules, or industry practices
-3. **Forecasting**: Develop reliable predictive models for future Python usage trends
-4. **Model Comparison**: Evaluate different time series modeling approaches to determine optimal forecasting strategies
-5. **Uncertainty Quantification**: Provide confidence intervals and assess forecast reliability
+1.  **Trend Analysis**: Identify and quantify long-term growth or decline patterns in Python usage
+2.  **Seasonality Detection**: Discover recurring patterns that may reflect academic cycles, release schedules, or industry practices
+3.  **Forecasting**: Develop reliable predictive models for future Python usage trends
+4.  **Model Comparison**: Evaluate different time series modeling approaches to determine optimal forecasting strategies
+5.  **Uncertainty Quantification**: Provide confidence intervals and assess forecast reliability
 
-The practical value of this analysis extends to multiple stakeholders:
-- **Educational institutions** can adjust their curriculum based on technology trends
-- **Technology companies** can make informed decisions about product development and support
-- **Individual developers** can guide career development and skill acquisition
-- **Researchers** can understand technology adoption patterns and community dynamics
+The practical value of this analysis extends to multiple stakeholders: - **Educational institutions** can adjust their curriculum based on technology trends - **Technology companies** can make informed decisions about product development and support - **Individual developers** can guide career development and skill acquisition - **Researchers** can understand technology adoption patterns and community dynamics
 
 ### 1.2 Dataset Description and Source
 
-The dataset used in this analysis was obtained from Kaggle (https://www.kaggle.com/datasets/aishu200023/stackindex) and represents a comprehensive collection of Stack Overflow question counts for various programming technologies and libraries.
+The dataset used in this analysis was obtained from Kaggle (<https://www.kaggle.com/datasets/aishu200023/stackindex>) and represents a comprehensive collection of Stack Overflow question counts for various programming technologies and libraries.
 
-**Dataset Characteristics:**
-- **Source**: Stack Overflow question frequency data
-- **Time Period**: Monthly observations from January 2009 onwards
-- **Granularity**: Monthly aggregated counts
-- **Scope**: Multiple programming languages, frameworks, and libraries
-- **Structure**: Each column represents a different technology (e.g., Python, R, TensorFlow, scikit-learn)
-- **Observations**: Each row contains question counts for all technologies in a specific month
+**Dataset Characteristics:** - **Source**: Stack Overflow question frequency data - **Time Period**: Monthly observations from January 2009 onwards - **Granularity**: Monthly aggregated counts - **Scope**: Multiple programming languages, frameworks, and libraries - **Structure**: Each column represents a different technology (e.g., Python, R, TensorFlow, scikit-learn) - **Observations**: Each row contains question counts for all technologies in a specific month
 
-**Key Technologies Included:**
-The dataset encompasses a wide range of technologies, including:
-- **Programming Languages**: Python, R, MATLAB
-- **Machine Learning Libraries**: TensorFlow, scikit-learn, Keras, PyTorch
-- **Data Science Tools**: pandas, NumPy, SciPy, matplotlib
-- **Web Frameworks**: Various Python and other web development frameworks
-- **Specialized Libraries**: OpenCV, NLTK, spaCy, and many others
+**Key Technologies Included:** The dataset encompasses a wide range of technologies, including: - **Programming Languages**: Python, R, MATLAB - **Machine Learning Libraries**: TensorFlow, scikit-learn, Keras, PyTorch - **Data Science Tools**: pandas, NumPy, SciPy, matplotlib - **Web Frameworks**: Various Python and other web development frameworks - **Specialized Libraries**: OpenCV, NLTK, spaCy, and many others
 
-**Data Quality Considerations:**
-- Monthly aggregation smooths short-term fluctuations while preserving long-term trends
-- Stack Overflow's global reach provides internationally representative data
-- Question frequency serves as a proxy for technology usage and learning activity
-- The dataset reflects both professional and educational technology use patterns
+**Data Quality Considerations:** - Monthly aggregation smooths short-term fluctuations while preserving long-term trends - Stack Overflow's global reach provides internationally representative data - Question frequency serves as a proxy for technology usage and learning activity - The dataset reflects both professional and educational technology use patterns
 
 ### 1.3 Methodology Overview
 
 This study employs classical time series analysis techniques following established statistical methodologies:
 
-**1. Exploratory Data Analysis**
-- Time series visualization and decomposition
-- Stationarity testing using Augmented Dickey-Fuller (ADF) and KPSS tests
-- Seasonal pattern identification and quantification
-- Data transformation assessment using Box-Cox methodology
+**1. Exploratory Data Analysis** - Time series visualization and decomposition - Stationarity testing using Augmented Dickey-Fuller (ADF) and KPSS tests - Seasonal pattern identification and quantification - Data transformation assessment using Box-Cox methodology
 
-**2. Model Development (Box & Jenkins Methodology)**
-- **SARIMA Models**: Systematic identification using ACF/PACF analysis, parameter estimation, and diagnostic evaluation
-- **ETS Models**: Exponential smoothing with various error, trend, and seasonal components
+**2. Model Development (Box & Jenkins Methodology)** - **SARIMA Models**: Systematic identification using ACF/PACF analysis, parameter estimation, and diagnostic evaluation - **ETS Models**: Exponential smoothing with various error, trend, and seasonal components
 
-**3. Forecast Generation and Evaluation**
-- Out-of-sample forecast validation using train/test split
-- Multiple accuracy metrics (RMSE, MAE, MAPE, MASE)
-- Confidence interval analysis and coverage assessment
-- Bootstrap methodology for non-parametric uncertainty quantification
+**3. Forecast Generation and Evaluation** - Out-of-sample forecast validation using train/test split - Multiple accuracy metrics (RMSE, MAE, MAPE, MASE) - Confidence interval analysis and coverage assessment - Bootstrap methodology for non-parametric uncertainty quantification
 
-**4. Model Comparison and Selection**
-- Information criteria comparison (AIC, BIC)
-- Forecast accuracy assessment
-- Diagnostic evaluation, including residual analysis
-- Parameter significance testing
+**4. Model Comparison and Selection** - Information criteria comparison (AIC, BIC) - Forecast accuracy assessment - Diagnostic evaluation, including residual analysis - Parameter significance testing
 
-**Focus on Python Technology Trends**
-While the dataset contains numerous technologies, this analysis focuses specifically on Python programming language trends due to:
-- Python's significant growth in the data science and machine learning domains
-- Strong seasonal patterns related to academic and professional cycles
-- Sufficient data history for robust statistical analysis
-- High relevance to the current technology landscape
+**Focus on Python Technology Trends** While the dataset contains numerous technologies, this analysis focuses specifically on Python programming language trends due to: - Python's significant growth in the data science and machine learning domains - Strong seasonal patterns related to academic and professional cycles - Sufficient data history for robust statistical analysis - High relevance to the current technology landscape
 
 This methodological approach ensures rigorous statistical analysis while providing practical insights for understanding and forecasting technology adoption patterns in the programming community.
-
 
 ## 2. Data and exploratory analysis / data transformation
 
@@ -172,6 +132,15 @@ if (length(plots) > 0) {
 } else {
   cat("No plots to display - check data processing\n")
 }
+
+# Plot Python usage specifically
+python_plot <- ggplot(tech_data, aes(x = date, y = python)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_smooth(method = "loess", se = TRUE, alpha = 0.3) +
+  labs(title = "Python Usage Over Time",
+       x = "Date", y = "Count") +
+  theme_minimal()
+print(python_plot)
 ```
 
 ### 2.4 Trend and Seasonality Analysis
@@ -310,7 +279,6 @@ if (adf_train$p.value > 0.05) {
 
 par(mfrow = c(1, 1))
 ```
-
 
 #### 3.1.2 Manual Model Comparison
 
