@@ -142,7 +142,9 @@ python_plot <- ggplot(tech_data, aes(x = date, y = python)) +
   theme_minimal()
 print(python_plot)
 ```
-```{r trend-seasonality}
+### 2.4 Box-Cox
+
+```{r Box-Cox}
 lambda_bc <- BoxCox.lambda(python_ts)
 cat("Optimal Box-Cox lambda:", lambda_bc, "\n")
 
@@ -167,7 +169,7 @@ if (abs(lambda_bc - 1) > 0.01) { # Apply if lambda is not very close to 1
 }
 ```
 
-### 2.4 Trend and Seasonality Analysis
+### 2.5 Trend and Seasonality Analysis
 
 ```{r trend-seasonality}
 # Focus on Python as main technology for detailed analysis
@@ -186,7 +188,7 @@ cat("Standard deviation:", sd(python_ts), "\n")
 cat("Coefficient of variation:", sd(python_ts) / mean(python_ts), "\n")
 ```
 
-### 2.5 Stationarity Testing
+### 2.6 Stationarity Testing
 
 ```{r stationarity-tests}
 # Augmented Dickey-Fuller test for stationarity
@@ -204,7 +206,7 @@ cat("p-value:", kpss_test$p.value, "\n")
 cat("Result:", ifelse(kpss_test$p.value < 0.05, "Stationary", "Non-stationary"), "\n")
 ```
 
-### 2.6 Differencing Analysis
+### 2.7 Differencing Analysis
 
 ```{r comprehensive-differencing}
 # First create the differenced series
@@ -246,7 +248,7 @@ plot(python_both_diff, main = "Both Differences Applied", ylab = "Difference")
 par(mfrow = c(1, 1))
 ```
 
-### 2.7 Data Splitting for Model Development
+### 2.8 Data Splitting for Model Development
 
 ```{r data-splitting}
 # Calculate split point (80% for training, 20% for testing)
