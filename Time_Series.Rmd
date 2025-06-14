@@ -222,28 +222,7 @@ plot(python_both_diff, main = "Both Differences Applied", ylab = "Difference")
 par(mfrow = c(1, 1))
 ```
 
-### 2.7 ACF/PACF Analysis of Differenced Series
-
-```{r differenced-acf-pacf}
-# ACF and PACF analysis of differenced series for model identification
-par(mfrow = c(1, 2))
-
-# Regular differenced series
-acf(python_diff, main = "ACF: Regular Differenced", lag.max = 40, na.action = na.pass)
-pacf(python_diff, main = "PACF: Regular Differenced", lag.max = 40, na.action = na.pass)
-
-# Seasonally differenced series
-acf(python_seasonal_diff, main = "ACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
-pacf(python_seasonal_diff, main = "PACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
-
-# Double differencing (both seasonal and regular) - primary series for model identification
-acf(python_both_diff, main = "ACF: Both Differences", lag.max = 40, na.action = na.pass)
-pacf(python_both_diff, main = "PACF: Both Differences", lag.max = 40, na.action = na.pass)
-
-par(mfrow = c(1, 1))
-```
-
-### 2.8 Data Splitting for Model Development
+### 2.7 Data Splitting for Model Development
 
 ```{r data-splitting}
 # Calculate split point (80% for training, 20% for testing)
@@ -281,30 +260,23 @@ legend("topleft", legend = c("Training", "Test"),
 # Use original training data for model development
 train_ts <- python_train
 
-# Plot ACF and PACF to identify initial parameters
-par(mfrow = c(2, 2))
-plot(train_ts, main = "Training Series")
-acf(train_ts, main = "ACF of Training Series", lag.max = 40)
-pacf(train_ts, main = "PACF of Training Series", lag.max = 40)
+# Plot training series
+plot(train_ts, main = "Training Series", ylab = "Python Questions", xlab = "Time")
 
-# Check if differencing is needed
-adf_train <- adf.test(train_ts)
-cat("ADF test p-value for training series:", adf_train$p.value, "\n")
+# ACF/PACF plots for model identification
+par(mfrow = c(3, 2))
 
-# Apply first difference if needed
-if (adf_train$p.value > 0.05) {
-  train_diff <- diff(train_ts)
-  plot(train_diff, main = "First Differenced Training Series")
+# Regular differenced series
+acf(train_diff, main = "ACF: Regular Differenced", lag.max = 40, na.action = na.pass)
+pacf(train_diff, main = "PACF: Regular Differenced", lag.max = 40, na.action = na.pass)
 
-  # Test stationarity of differenced series
-  adf_diff <- adf.test(train_diff)
-  cat("ADF test p-value for differenced series:", adf_diff$p.value, "\n")
+# Seasonally differenced series
+acf(train_seasonal_diff, main = "ACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
+pacf(train_seasonal_diff, main = "PACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
 
-  # ACF/PACF of differenced series
-  par(mfrow = c(1, 2))
-  acf(train_diff, main = "ACF of Differenced Series", lag.max = 40)
-  pacf(train_diff, main = "PACF of Differenced Series", lag.max = 40)
-}
+# Both differences (primary for SARIMA identification)
+acf(train_both_diff, main = "ACF: Both Differences", lag.max = 40, na.action = na.pass)
+pacf(train_both_diff, main = "PACF: Both Differences", lag.max = 40, na.action = na.pass)
 
 par(mfrow = c(1, 1))
 ```
