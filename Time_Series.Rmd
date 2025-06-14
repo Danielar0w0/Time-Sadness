@@ -198,23 +198,67 @@ pacf(python_diff, main = "PACF: First Differenced Series", lag.max = 40)
 par(mfrow = c(1, 1))
 ```
 
-### 2.7 Differencing for Stationarity
+### 2.7 Differencing Analysis
 
-```{r differencing-analysis}
-# Test stationarity of differenced series
+```{r comprehensive-differencing}
+# Test stationarity of regular differenced series
 adf_diff <- adf.test(python_diff)
-cat("ADF Test for differenced series:\n")
-cat("p-value:", adf_diff$p.value, "\n")
-cat("Result:", ifelse(adf_diff$p.value < 0.05, "Stationary", "Non-stationary"), "\n")
+cat("=== COMPREHENSIVE DIFFERENCING ANALYSIS ===\n\n")
 
-# Plot original vs differenced data
-par(mfrow = c(2, 1))
+cat("Regular differencing (first difference) results:\n")
+cat("ADF test p-value:", adf_diff$p.value, "\n")
+cat("Result:", ifelse(adf_diff$p.value < 0.05, "Stationary", "Non-stationary"), "\n\n")
+
+# Apply seasonal differencing (difference at lag 12 for monthly data)
+python_seasonal_diff <- diff(python_ts, lag = 12)
+
+# Test stationarity of seasonally differenced series
+cat("Seasonal differencing (lag 12) results:\n")
+adf_seasonal <- adf.test(python_seasonal_diff)
+cat("ADF test p-value:", adf_seasonal$p.value, "\n")
+cat("Result:", ifelse(adf_seasonal$p.value < 0.05, "Stationary", "Non-stationary"), "\n\n")
+
+# Apply both seasonal and regular differencing simultaneously
+# This is the standard approach for seasonal time series
+python_both_diff <- diff(diff(python_ts, lag = 12))
+
+cat("Both seasonal and regular differencing:\n")
+adf_both <- adf.test(python_both_diff)
+cat("ADF test p-value:", adf_both$p.value, "\n")
+cat("Result:", ifelse(adf_both$p.value < 0.05, "Stationary", "Non-stationary"), "\n\n")
+
+# Plot all differencing approaches
+par(mfrow = c(2, 2))
 plot(python_ts, main = "Original Python Series", ylab = "Count")
-plot(python_diff, main = "First Differenced Series", ylab = "Difference")
+plot(python_diff, main = "Regular Differenced Series", ylab = "Difference")
+plot(python_seasonal_diff, main = "Seasonally Differenced Series (lag=12)", ylab = "Difference")
+plot(python_both_diff, main = "Both Differences Applied", ylab = "Difference")
+
 par(mfrow = c(1, 1))
 ```
 
-### 2.8 Data Splitting for Model Development
+### 2.8 ACF/PACF Analysis of Differenced Series
+
+```{r differenced-acf-pacf}
+# ACF and PACF analysis of differenced series for model identification
+par(mfrow = c(3, 2))
+
+# Regular differenced series
+acf(python_diff, main = "ACF: Regular Differenced", lag.max = 40, na.action = na.pass)
+pacf(python_diff, main = "PACF: Regular Differenced", lag.max = 40, na.action = na.pass)
+
+# Seasonally differenced series
+acf(python_seasonal_diff, main = "ACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
+pacf(python_seasonal_diff, main = "PACF: Seasonally Differenced", lag.max = 40, na.action = na.pass)
+
+# Double differencing (both seasonal and regular) - primary series for model identification
+acf(python_both_diff, main = "ACF: Both Differences", lag.max = 40, na.action = na.pass)
+pacf(python_both_diff, main = "PACF: Both Differences", lag.max = 40, na.action = na.pass)
+
+par(mfrow = c(1, 1))
+```
+
+### 2.9 Data Splitting for Model Development
 
 ```{r data-splitting}
 # Calculate split point (80% for training, 20% for testing)
@@ -288,9 +332,15 @@ models_to_test <- list(
   list(order = c(1, 1, 0), seasonal = c(1, 1, 1)),
   list(order = c(1, 1, 0), seasonal = c(0, 1, 1)),
   list(order = c(1, 1, 0), seasonal = c(1, 1, 0)),
+  list(order = c(1, 1, 0), seasonal = c(1, 0, 0)),
+  list(order = c(1, 1, 0), seasonal = c(0, 0, 1)),
+  list(order = c(0, 1, 1), seasonal = c(0, 0, 0)),
   list(order = c(1, 1, 1), seasonal = c(1, 1, 1)),
   list(order = c(1, 1, 1), seasonal = c(0, 1, 1)),
-  list(order = c(1, 1, 1), seasonal = c(1, 1, 0))
+  list(order = c(1, 1, 1), seasonal = c(1, 1, 0)),
+  list(order = c(1, 1, 1), seasonal = c(1, 0, 0)),
+  list(order = c(1, 1, 1), seasonal = c(0, 0, 1)),
+  list(order = c(0, 1, 2), seasonal = c(0, 0, 0))
 )
 
 # Store model results
@@ -337,24 +387,53 @@ print(model_results)
 
 #### 3.1.3 Automatic Model Selection
 
-```{r sarima-auto-selection}
-# Use auto.arima for initial model selection
-auto_model <- auto.arima(train_ts, seasonal = TRUE, stepwise = FALSE,
+```{r arima-auto-selection}
+# Use auto.arima for SARIMA model selection
+auto_sarima <- auto.arima(train_ts, seasonal = TRUE, stepwise = FALSE,
                          approximation = FALSE, trace = TRUE)
 
 cat("Auto-selected SARIMA model:\n")
-print(auto_model)
-cat("\nModel summary:\n")
-summary(auto_model)
+print(auto_sarima)
+
+# Use auto.arima for non-seasonal ARIMA model selection
+auto_arima <- auto.arima(train_ts, seasonal = FALSE, stepwise = FALSE,
+                        approximation = FALSE, trace = TRUE)
+
+cat("\nAuto-selected ARIMA (non-seasonal) model:\n")
+print(auto_arima)
+
+# Compare SARIMA vs ARIMA
+cat("\n=== AUTOMATIC MODEL COMPARISON ===\n")
+cat("SARIMA Model:\n")
+cat("- Model:", paste(arimaorder(auto_sarima), collapse = "-"), "\n")
+cat("- AIC:", auto_sarima$aic, "\n")
+cat("- BIC:", auto_sarima$bic, "\n")
+
+cat("\nARIMA Model:\n")
+cat("- Model:", paste(arimaorder(auto_arima)[1:3], collapse = "-"), "\n")
+cat("- AIC:", auto_arima$aic, "\n")
+cat("- BIC:", auto_arima$bic, "\n")
+
+# Determine which automatic model is better
+if (auto_sarima$aic < auto_arima$aic) {
+  best_auto_model <- auto_sarima
+  cat("\nBest automatic model: SARIMA (lower AIC)\n")
+} else {
+  best_auto_model <- auto_arima
+  cat("\nBest automatic model: ARIMA (lower AIC)\n")
+}
+
+cat("\nModel summary for best automatic model:\n")
+summary(best_auto_model)
 ```
 
 #### 3.1.4 Parameter Estimation and Significance
 
-```{r sarima-best-model}
-# Select best model (lowest AIC)
-best_sarima <- auto_model
+```{r best-model-analysis}
+# Use best automatic model for detailed analysis
+best_sarima <- best_auto_model
 
-cat("Best SARIMA model coefficients:\n")
+cat("Best model coefficients:\n")
 print(coef(best_sarima))
 
 cat("\nStandard errors:\n")
@@ -372,6 +451,15 @@ print(p_values)
 significant_params <- p_values < 0.05
 cat("\nSignificant parameters (p < 0.05):\n")
 print(significant_params)
+
+# Model type identification
+if (length(arimaorder(best_sarima)) == 6) {
+  cat("\nSelected model type: SARIMA\n")
+  cat("Model specification:", paste(arimaorder(best_sarima), collapse = "-"), "\n")
+} else {
+  cat("\nSelected model type: ARIMA (non-seasonal)\n")
+  cat("Model specification:", paste(arimaorder(best_sarima)[1:3], collapse = "-"), "\n")
+}
 ```
 
 #### 3.1.5 Diagnostic Evaluation
@@ -460,7 +548,7 @@ if (length(ets_models) > 0) {
       RMSE = rmse
     ))
   }
-  
+
   ets_manual_comparison <- ets_manual_comparison[order(ets_manual_comparison$AIC),]
   print(ets_manual_comparison)
 } else {
