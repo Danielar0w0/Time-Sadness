@@ -180,27 +180,12 @@ cat("p-value:", kpss_test$p.value, "\n")
 cat("Result:", ifelse(kpss_test$p.value > 0.05, "Stationary", "Non-stationary"), "\n")
 ```
 
-### 2.6 ACF and PACF Analysis for Model Identification
-
-```{r acf-pacf-analysis, fig.width=12, fig.height=8}
-# ACF and PACF analysis for original and differenced series
-par(mfrow = c(2, 2))
-
-# Original series
-acf(python_ts, main = "ACF: Original Python Series", lag.max = 40)
-pacf(python_ts, main = "PACF: Original Python Series", lag.max = 40)
-
-# First differenced series (for stationarity)
-python_diff <- diff(python_ts)
-acf(python_diff, main = "ACF: First Differenced Series", lag.max = 40)
-pacf(python_diff, main = "PACF: First Differenced Series", lag.max = 40)
-
-par(mfrow = c(1, 1))
-```
-
-### 2.7 Differencing Analysis
+### 2.6 Differencing Analysis
 
 ```{r comprehensive-differencing}
+# First create the differenced series
+python_diff <- diff(python_ts)
+
 # Test stationarity of regular differenced series
 adf_diff <- adf.test(python_diff)
 cat("=== COMPREHENSIVE DIFFERENCING ANALYSIS ===\n\n")
@@ -237,11 +222,11 @@ plot(python_both_diff, main = "Both Differences Applied", ylab = "Difference")
 par(mfrow = c(1, 1))
 ```
 
-### 2.8 ACF/PACF Analysis of Differenced Series
+### 2.7 ACF/PACF Analysis of Differenced Series
 
 ```{r differenced-acf-pacf}
 # ACF and PACF analysis of differenced series for model identification
-par(mfrow = c(3, 2))
+par(mfrow = c(1, 2))
 
 # Regular differenced series
 acf(python_diff, main = "ACF: Regular Differenced", lag.max = 40, na.action = na.pass)
@@ -258,7 +243,7 @@ pacf(python_both_diff, main = "PACF: Both Differences", lag.max = 40, na.action 
 par(mfrow = c(1, 1))
 ```
 
-### 2.9 Data Splitting for Model Development
+### 2.8 Data Splitting for Model Development
 
 ```{r data-splitting}
 # Calculate split point (80% for training, 20% for testing)
