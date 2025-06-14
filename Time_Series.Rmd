@@ -263,6 +263,24 @@ train_ts <- python_train
 # Plot training series
 plot(train_ts, main = "Training Series", ylab = "Python Questions", xlab = "Time")
 
+# Check stationarity of training series
+adf_train <- adf.test(train_ts)
+cat("ADF test p-value for training series:", adf_train$p.value, "\n")
+cat("Training series is:", ifelse(adf_train$p.value < 0.05, "Stationary", "Non-stationary"), "\n\n")
+
+# Create differenced series from training data for model identification
+cat("=== ACF/PACF ANALYSIS FOR MODEL IDENTIFICATION ===\n\n")
+
+train_diff <- diff(train_ts)
+train_seasonal_diff <- diff(train_ts, lag = 12)
+train_both_diff <- diff(diff(train_ts, lag = 12))
+
+# Test stationarity of differenced training series
+cat("Stationarity tests on training data:\n")
+cat("- Regular differenced: p-value =", adf.test(train_diff)$p.value, "\n")
+cat("- Seasonal differenced: p-value =", adf.test(train_seasonal_diff)$p.value, "\n")
+cat("- Both differences: p-value =", adf.test(train_both_diff)$p.value, "\n\n")
+
 # ACF/PACF plots for model identification
 par(mfrow = c(3, 2))
 
@@ -279,6 +297,11 @@ acf(train_both_diff, main = "ACF: Both Differences", lag.max = 40, na.action = n
 pacf(train_both_diff, main = "PACF: Both Differences", lag.max = 40, na.action = na.pass)
 
 par(mfrow = c(1, 1))
+
+cat("Model Identification Guidelines:\n")
+cat("- Use 'Both Differences' series for SARIMA parameter identification\n")
+cat("- Look for patterns in ACF/PACF at seasonal lags (12, 24, 36...)\n")
+cat("- Consider d=1, D=1 based on differencing analysis\n")
 ```
 
 #### 3.1.2 Manual Model Comparison
