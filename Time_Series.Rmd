@@ -600,6 +600,41 @@ print(ets_comparison)
 best_ets <- ets_auto
 ```
 
+### 3.2.3 ETS Analysis
+
+```{r residuals ets}
+# Residual analysis for ETS model
+residuals_ets <- residuals(best_ets) # Assuming best_ets is your chosen ETS model (e.g., ets_auto)
+
+par(mfrow = c(2, 3))
+
+# 1. Residuals plot
+plot(residuals_ets, main = "ETS Residuals", ylab = "Residuals")
+abline(h = 0, col = "red")
+
+# 2. ACF of residuals
+acf(residuals_ets, main = "ACF of Residuals", na.action = na.pass)
+
+# 3. PACF of residuals
+pacf(residuals_ets, main = "PACF of Residuals", na.action = na.pass)
+
+# 4. QQ plot
+qqnorm(residuals_ets, main = "Q-Q Plot of Residuals")
+qqline(residuals_ets, col = "red")
+
+# 5. Histogram
+hist(residuals_ets, main = "Histogram of Residuals", breaks = 20)
+
+# 6. Fitted vs Residuals
+plot(fitted(best_ets), residuals_ets,
+     main = "Fitted vs Residuals", xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, col = "red")
+
+cat("Ljung-Box test for residual autocorrelation:\n")
+lb_test <- Box.test(residuals_ets, lag = 20, type = "Ljung-Box")
+print(lb_test)
+```
+
 ### 3.3 Model Comparison Summary
 
 ```{r model-summary}
