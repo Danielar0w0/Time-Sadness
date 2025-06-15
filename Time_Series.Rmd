@@ -142,51 +142,150 @@ python_plot <- ggplot(tech_data, aes(x = date, y = python)) +
   theme_minimal()
 print(python_plot)
 ```
-### 2.4 Box-Cox
 
-```{r Box-Cox}
-lambda_bc <- BoxCox.lambda(python_ts)
-cat("Optimal Box-Cox lambda:", lambda_bc, "\n")
+### 2.4 Trend and Seasonality Analysis
 
-# Apply Box-Cox transformation using the estimated lambda.
-# We apply it only if the lambda suggests a significant transformation
-# (i.e., not very close to 1). Small deviations might not warrant a transform.
-# For demonstration, we will apply it if lambda is not exactly 1 or 0.
-# If lambda is 0, BoxCox() automatically applies log transformation.
-if (abs(lambda_bc - 1) > 0.01) { # Apply if lambda is not very close to 1
-  python_ts_transformed <- BoxCox(python_ts, lambda = lambda_bc)
-  cat("Box-Cox transformation applied using lambda:", lambda_bc, "\n")
-  # Plot the transformed series to visually inspect variance stabilization
-  plot(python_ts_transformed, main = "Python Usage Over Time (Box-Cox Transformed)",
-       ylab = paste0("Transformed Count (lambda = ", round(lambda_bc, 2), ")"))
-  
-  # Update python_ts to the transformed series for subsequent steps
-  # This ensures all following analyses use the variance-stabilized data.
-  python_ts <- python_ts_transformed
-} else {
-  cat("No significant Box-Cox transformation needed (lambda close to 1, or series already stable).\n")
-  # If no transformation is applied, python_ts remains as it was initialized.
-}
-```
-
-### 2.5 Trend and Seasonality Analysis
-
-```{r trend-seasonality}
+```{r trend-seasonality-analysis}
 # Focus on Python as main technology for detailed analysis
-# python_ts <- ts(data$python, start = c(2009, 1), frequency = 12)
+python_ts <- ts(data$python, start = c(2009, 1), frequency = 12)
 
-# Decompose the time series
+# Decompose the time series to analyze trend and seasonality
 python_decomp <- decompose(python_ts)
 
 # Plot decomposition
 plot(python_decomp)
 
 # Calculate trend statistics
+cat("=== TREND AND SEASONALITY ANALYSIS ===\n\n")
 cat("Python usage trend analysis:\n")
-cat("Mean:", mean(python_ts), "\n")
-cat("Standard deviation:", sd(python_ts), "\n")
-cat("Coefficient of variation:", sd(python_ts) / mean(python_ts), "\n")
+cat("Mean:", round(mean(python_ts), 2), "\n")
+cat("Standard deviation:", round(sd(python_ts), 2), "\n")
+cat("Coefficient of variation:", round(sd(python_ts) / mean(python_ts), 3), "\n\n")
+
+# Analyze variance over time to assess need for transformation
+# Split the series into periods and calculate variance
+ts_length <- length(python_ts)
+period_size <- 24  # 2 years
+periods <- floor(ts_length / period_size)
+
+variances <- numeric(periods)
+for (i in 1:periods) {
+  start_idx <- (i-1) * period_size + 1
+  end_idx <- i * period_size
+  period_data <- python_ts[start_idx:end_idx]
+  variances[i] <- var(period_data)
+}
+
+cat("Variance analysis across time periods:\n")
+cat("Period variances:", round(variances, 2), "\n")
+cat("Variance ratio (max/min):", round(max(variances)/min(variances), 2), "\n")
+
+# Test for heteroscedasticity (changing variance)
+if (max(variances)/min(variances) > 3) {
+  cat("HIGH variance heteroscedasticity detected - Box-Cox transformation recommended\n")
+} else if (max(variances)/min(variances) > 2) {
+  cat("MODERATE variance heteroscedasticity detected - Box-Cox transformation may be beneficial\n")
+} else {
+  cat("LOW variance heteroscedasticity - Box-Cox transformation may not be necessary\n")
+}
+
+# Analyze seasonal patterns
+seasonal_component <- python_decomp$seasonal
+cat("\nSeasonal pattern analysis:\n")
+cat("Seasonal amplitude (max-min):", round(max(seasonal_component, na.rm = TRUE) - min(seasonal_component, na.rm = TRUE), 2), "\n")
+cat("Seasonal relative amplitude (% of mean):", round(100 * (max(seasonal_component, na.rm = TRUE) - min(seasonal_component, na.rm = TRUE)) / mean(python_ts), 2), "%\n")
+
+# Plot variance over time
+par(mfrow = c(2, 2))
+plot(python_ts, main = "Original Python Series", ylab = "Count")
+plot(python_decomp$trend, main = "Trend Component", ylab = "Trend")
+plot(python_decomp$seasonal, main = "Seasonal Component", ylab = "Seasonal")
+plot(python_decomp$random, main = "Random Component", ylab = "Random")
+par(mfrow = c(1, 1))
 ```
+
+### 2.5 Box-Cox Transformation
+
+```{r Box-Cox-transformation}
+# Based on the trend and seasonality analysis, assess need for Box-Cox transformation
+lambda_bc <- BoxCox.lambda(python_ts)
+cat("=== BOX-COX TRANSFORMATION ANALYSIS ===\n\n")
+cat("Optimal Box-Cox lambda:", round(lambda_bc, 4), "\n")
+
+# Interpretation of lambda values
+cat("\nLambda interpretation:\n")
+if (abs(lambda_bc - 1) < 0.01) {
+  cat("- Lambda ≈ 1: No transformation needed (data already approximately normal)\n")
+} else if (abs(lambda_bc - 0.5) < 0.1) {
+  cat("- Lambda ≈ 0.5: Square root transformation recommended\n")
+} else if (abs(lambda_bc) < 0.1) {
+  cat("- Lambda ≈ 0: Log transformation recommended\n")
+} else if (lambda_bc < 0) {
+  cat("- Lambda < 0: Inverse transformation family\n")
+} else {
+  cat("- Lambda =", round(lambda_bc, 4), ": Power transformation recommended\n")
+}
+
+# Apply Box-Cox transformation based on lambda and variance analysis
+variance_ratio <- max(variances)/min(variances)
+transform_needed <- (abs(lambda_bc - 1) > 0.01) || (variance_ratio > 2)
+
+if (transform_needed) {
+  python_ts_transformed <- BoxCox(python_ts, lambda = lambda_bc)
+  cat("\nBox-Cox transformation APPLIED using lambda:", round(lambda_bc, 4), "\n")
+  cat("Justification: ")
+  if (abs(lambda_bc - 1) > 0.01) {
+    cat("Optimal lambda significantly different from 1; ")
+  }
+  if (variance_ratio > 2) {
+    cat("High variance heteroscedasticity detected (ratio:", round(variance_ratio, 2), ")")
+  }
+  cat("\n")
+  
+  # Compare original vs transformed series
+  par(mfrow = c(2, 2))
+  
+  # Original series
+  plot(python_ts, main = "Original Python Series", ylab = "Count")
+  
+  # Transformed series
+  plot(python_ts_transformed, main = paste0("Box-Cox Transformed (λ = ", round(lambda_bc, 3), ")"),
+       ylab = "Transformed Count")
+  
+  # Histograms for comparison
+  hist(python_ts, main = "Original Data Distribution", 
+       xlab = "Count", breaks = 20, col = "lightblue")
+  hist(python_ts_transformed, main = "Transformed Data Distribution", 
+       xlab = "Transformed Count", breaks = 20, col = "lightgreen")
+  
+  par(mfrow = c(1, 1))
+  
+  # Variance comparison
+  cat("\nVariance comparison:\n")
+  cat("Original series variance:", round(var(python_ts), 2), "\n")
+  cat("Transformed series variance:", round(var(python_ts_transformed), 2), "\n")
+  
+  # Update python_ts for subsequent analyses
+  python_ts <- python_ts_transformed
+  
+} else {
+  cat("\nBox-Cox transformation NOT APPLIED\n")
+  cat("Justification: Lambda close to 1 (", round(lambda_bc, 4), ") and low variance heteroscedasticity (ratio:", round(variance_ratio, 2), ")\n")
+  cat("The original series is already sufficiently stable for modeling.\n")
+}
+
+# Final assessment
+cat("\n=== TRANSFORMATION SUMMARY ===\n")
+if (transform_needed) {
+  cat("Status: Box-Cox transformation applied\n")
+  cat("Lambda parameter:", round(lambda_bc, 4), "\n")
+  cat("All subsequent analyses will use the transformed series\n")
+} else {
+  cat("Status: No transformation applied\n")
+  cat("Subsequent analyses will use the original series\n")
+}
+```
+
 
 ### 2.6 Stationarity Testing
 
