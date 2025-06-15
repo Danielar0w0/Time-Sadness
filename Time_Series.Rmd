@@ -337,6 +337,7 @@ cat("- Consider d=1, D=1 based on differencing analysis\n")
 ```{r sarima-manual-models}
 # Define candidate SARIMA models based on ACF/PACF analysis
 models_to_test <- list(
+  list(order = c(0, 1, 1), seasonal = c(0, 1, 1)),
   list(order = c(1, 1, 0), seasonal = c(1, 1, 1)),
   list(order = c(1, 1, 0), seasonal = c(0, 1, 1)),
   list(order = c(1, 1, 0), seasonal = c(1, 1, 0)),
@@ -503,8 +504,18 @@ par(mfrow = c(1, 1))
 
 # Statistical tests for residuals
 cat("Ljung-Box test for residual autocorrelation:\n")
-lb_test <- Box.test(residuals_sarima, lag = 20, type = "Ljung-Box")
+lb_test <- Box.test(residuals_sarima, lag = 12, type = "Ljung-Box")
 print(lb_test)
+
+cat("\nShapiro-Wilk Test for Residuals:\n")
+shapiro.test(residuals_sarima)
+
+# Kolmogorov-Smirnov Test for Normality
+# Note: For Kolmogorov-Smirnov, you typically compare against a theoretical distribution.
+# For residuals, it's common to compare against a normal distribution with mean 0 and standard deviation
+# equal to the standard deviation of your residuals.
+cat("\nKolmogorov-Smirnov Test for Residuals:\n")
+ks.test(residuals_sarima, "pnorm", mean = mean(residuals_sarima), sd = sd(residuals_sarima))
 ```
 
 ### 3.2 ETS Model Development
@@ -600,7 +611,7 @@ print(ets_comparison)
 best_ets <- ets_auto
 ```
 
-### 3.2.3 ETS Analysis
+#### 3.2.3 ETS Analysis
 
 ```{r residuals ets}
 # Residual analysis for ETS model
@@ -631,8 +642,18 @@ plot(fitted(best_ets), residuals_ets,
 abline(h = 0, col = "red")
 
 cat("Ljung-Box test for residual autocorrelation:\n")
-lb_test <- Box.test(residuals_ets, lag = 20, type = "Ljung-Box")
+lb_test <- Box.test(residuals_ets, lag = 40, type = "Ljung-Box")
 print(lb_test)
+
+cat("\nShapiro-Wilk Test for Residuals:\n")
+shapiro.test(residuals_ets)
+
+# Kolmogorov-Smirnov Test for Normality
+# Note: For Kolmogorov-Smirnov, you typically compare against a theoretical distribution.
+# For residuals, it's common to compare against a normal distribution with mean 0 and standard deviation
+# equal to the standard deviation of your residuals.
+cat("\nKolmogorov-Smirnov Test for Residuals:\n")
+ks.test(residuals_ets, "pnorm", mean = mean(residuals_sarima), sd = sd(residuals_sarima))
 ```
 
 ### 3.3 Model Comparison Summary
