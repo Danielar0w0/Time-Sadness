@@ -286,7 +286,6 @@ if (transform_needed) {
 }
 ```
 
-
 ### 2.6 Stationarity Testing
 
 ```{r stationarity-tests}
@@ -495,21 +494,25 @@ print(model_results)
 
 #### 3.1.3 Automatic Model Selection
 
-```{r arima-auto-selection}
+```{r sarima-auto-selection}
 # Use auto.arima for SARIMA model selection
 auto_sarima <- auto.arima(train_ts, seasonal = TRUE, stepwise = FALSE,
                          approximation = FALSE, trace = TRUE)
 
 cat("Auto-selected SARIMA model:\n")
 print(auto_sarima)
+```
 
+```{r arima-auto-selection}
 # Use auto.arima for non-seasonal ARIMA model selection
 auto_arima <- auto.arima(train_ts, seasonal = FALSE, stepwise = FALSE,
                         approximation = FALSE, trace = TRUE)
 
 cat("\nAuto-selected ARIMA (non-seasonal) model:\n")
 print(auto_arima)
+```
 
+```{r arima-auto-selection-comparison}
 # Compare SARIMA vs ARIMA
 cat("\n=== AUTOMATIC MODEL COMPARISON ===\n")
 cat("SARIMA Model:\n")
@@ -623,7 +626,7 @@ ks.test(residuals_sarima, "pnorm", mean = mean(residuals_sarima), sd = sd(residu
 
 ```{r ets-manual-models}
 # Manual ETS models - using valid combinations
-train_ts <- python_train # this is in BoxCox for SARIMA model on this model since the best Model has Error M this doesnt matter 
+train_ts <- python_train # Use original training data without Box-Cox transformation for ETS
 cat("Fitting ETS models:\n")
 ets_models <- list()
 
@@ -769,13 +772,6 @@ cat("Best ETS Model:\n")
 cat("Model:", best_ets$method, "\n")
 cat("AIC:", best_ets$aic, "\n")
 cat("BIC:", best_ets$bic, "\n\n")
-
-# Model selection recommendation
-if (best_sarima$aic < best_ets$aic) {
-  cat("RECOMMENDATION: SARIMA model has lower AIC and is preferred\n")
-} else {
-  cat("RECOMMENDATION: ETS model has lower AIC and is preferred\n")
-}
 ```
 
 ## 4. Future observations forecast
@@ -791,25 +787,20 @@ cat("Forecast horizon:", h, "periods\n")
 forecast_sarima <- forecast(best_sarima, h = h)
 forecast_ets <- forecast(best_ets, h = h)
 if (exists("lambda_bc") && abs(lambda_bc - 1) > 0.01) {
-  cat("\nApplying inverse Box-Cox transformation to forecasts...\n")
+  cat("Applying inverse Box-Cox transformation to forecasts...\n")
   
   # Inverse transform SARIMA forecasts
   forecast_sarima$mean <- InvBoxCox(forecast_sarima$mean, lambda_bc)
   forecast_sarima$lower <- InvBoxCox(forecast_sarima$lower, lambda_bc)
   forecast_sarima$upper <- InvBoxCox(forecast_sarima$upper, lambda_bc)
   forecast_sarima$x <- python_train
-  
-  #forecast_ets$mean <- InvBoxCox(forecast_ets$mean, lambda_bc)
-  #forecast_ets$lower <- InvBoxCox(forecast_ets$lower, lambda_bc)
-  #forecast_ets$upper <- InvBoxCox(forecast_ets$upper, lambda_bc)
-  #forecast_ets$x <- python_train
 }
 
 # Display forecast summaries
-cat("\nSARIMA Forecast Summary:\n")
+cat("SARIMA Forecast Summary:\n")
 print(summary(forecast_sarima))
 
-cat("\nETS Forecast Summary:\n")
+cat("ETS Forecast Summary:\n")
 print(summary(forecast_ets))
 ```
 
